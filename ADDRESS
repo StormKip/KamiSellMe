@@ -1,0 +1,87 @@
+0xeeEcB17BAd21F7a17EDb42fF174b6460010A469C
+
+this.setState({file: URL.createObjectURL(event.target.files[0])});
+
+async componentDidMount(){
+        const kamikazes = await factory.methods.getDeployedUsers().call();
+
+        console.log(kamikazes);
+    }
+
+
+onSubmit = async (event) => {
+      event.preventDefault();
+      const accounts = await web3.eth.getAccounts();
+
+      await ipfs.add(this.state.buffer, (err, ipfsHash) => {
+        console.log(err,ipfsHash);
+        this.setState({ ipfsHash:ipfsHash[0].hash });
+        factory.methods.sendHash(this.state.ipfsHash).send({
+          from: accounts[0]
+        }, (error) => {
+          this.setState({errorMessage: error});
+        });
+      })
+    };
+         // // const items = await Promise.all(
+            // //     Array(parseInt(contractCount))
+            // //         .fill()
+            // //         .map((element, index) => {
+            // //             // let kamikaze = Kamikaze(deployedContracts[index]);
+            // //             // let item = [];
+            // //             // let itemContractCount = kamikaze.methods.getItemsCount().call().then(value => {
+            // //             //
+            // //             //
+            // //             //     if(value>0){
+            // //             //         for (let i = 0; i<value;i++){
+            // //             //             item.push(kamikaze.methods.items(i).call());
+            // //             //
+            // //             //         }
+            // //             //     }
+            // //             //
+            // //             // });
+            // //             //
+            // //             //
+            // //             // return item;
+            // //             return kamikaze.methods.items(index).call();
+            // //
+            // //         })
+            // // );
+
+
+    event.preventDefault();
+            this.setState({loading:true, errorMessage:'', buttonColor:'red'});
+            await ipfs.add(this.state.buffer, (err, ipfsHash) => {
+                console.log(err,ipfsHash);
+                //setState by setting ipfsHash to ipfsHash[0].hash
+                this.setState({ ipfsHash:ipfsHash[0].hash });
+
+            })
+
+            try{
+                const accounts = await web3.eth.getAccounts();
+                await factory.methods.createUser(this.state.authorName,this.state.authorBio, this.state.ipfsHash).send({
+                    from:accounts[0]
+                });
+                Router.pushRoute('/');
+            }catch (err) {
+                this.setState({errorMessage:err.message})
+            }
+
+
+    state={
+      loginAddress:'',
+        errorMessage:''
+    };
+
+    loginClick =async ()=>{
+        this.setState({errorMessage:''});
+        const accounts = await web3.eth.getAccounts();
+        const userExist = await factory.methods.isCreated().call({from: accounts[0]});
+
+        if(userExist){
+            Route.pushRoute(`/marketplace/${accounts[0]}/new`);
+        }else{
+            this.setState({errorMessage: 'Account not found, please click on register'})
+        }
+    } onClick={this.loginClick()}<Message error header="Oops!" content={this.state.errorMessage}/>
